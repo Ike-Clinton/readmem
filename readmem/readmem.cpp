@@ -49,7 +49,7 @@ int main()
 	DWORD dwAddr3;
 	dwAddr1 = ReadProcessMemory(phandle, (LPCVOID)(dwImageBase + pWorldBase), &dwAddr1, sizeof(int), &dwBytesRead);
 
-	printf("Read %d bytes\n", dwBytesRead);
+	printf("Read %d bytes at address %010X\n", dwBytesRead);
 	printf("Initial Value: %010X\n", dwAddr1);
 
 	dwAddr2 = ReadProcessMemory(phandle, (LPCVOID)(dwAddr1 + wPlayerOffset), &dwAddr2, sizeof(int), &dwBytesRead);
