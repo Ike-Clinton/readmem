@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <Windows.h>
 #include <iostream>
+#include "service.h"
 
 using namespace std;
 
@@ -22,53 +23,62 @@ int main()
 	WORD wPlayerOffset = 0x1658;
 	BYTE bVstateOffset = 0x34;
 
-	// Number of bytes read by RPM
-	DWORD dwBytesRead = 0;
-	HWND hwnd;
-	hwnd = FindWindow(NULL, L"DayZ");
+	//HWND hwnd;
+	//hwnd = FindWindow(NULL, L"DayZ");
 
 	// The process ID, used to r/w into the memory
-	DWORD pid;
+	//DWORD pid;
 	// Get the process ID and place the value at the address of pid
-	GetWindowThreadProcessId(hwnd, &pid);
-	cout << "pid = " << pid << "\n";
+	//GetWindowThreadProcessId(hwnd, &pid);
+	//cout << "pid = " << pid << "\n";
 
-	// Open a handle to the process specified by pid
-	HANDLE phandle;
-	// exit if OpenProcess returns NULL
-	if (!(phandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid)))
-	{
-		cout << "ERROR: Could not get process handle, OpenProcess returned error\n";
-		return 0;
-	}
+	LPTSTR DriverFilePath = TEXT("n0h8m8.sys");
 
+	LPTSTR SvcName = TEXT("n0h8m8");
+	LPTSTR SvcDisplayName = TEXT("n0h8m8");
+
+	CService svc(DriverFilePath, SvcName, SvcDisplayName, SERVICE_DEMAND_START);
 	
-	// Follow the pointer value to the player table
-	DWORD dwAddr1;
-	DWORD dwAddr2;
-	DWORD dwAddr3;
-	dwAddr1 = ReadProcessMemory(phandle, (LPCVOID)(dwImageBase + pWorldBase), &dwAddr1, sizeof(int), &dwBytesRead);
-
-	printf("Read %d bytes at address %010X\n + %010x = %010X", dwBytesRead);
-	printf("Initial Value: %010X\n", dwAddr1);
-
-	dwAddr2 = ReadProcessMemory(phandle, (LPCVOID)(dwAddr1 + wPlayerOffset), &dwAddr2, sizeof(int), &dwBytesRead);
-
-	printf("Read %d bytes\n", dwBytesRead);
-	printf("Second Value: %010X\n", dwAddr2);
-
-	// Read forever until program closes
-	while (1)
+	if (svc.CreateSvc() == SVC_OK)
 	{
-		// Read the memory at the specified address, store it at &values
-		//ReadProcessMemory(phandle, (void*)dwPtrBaseAddress+dwWorldBase, &value, sizeof(int), &dwPtrBytesRead);
-		dwAddr3 = ReadProcessMemory(phandle, (LPCVOID)(dwAddr2 + bVstateOffset), &dwAddr3, sizeof(int), &dwBytesRead);
-
-		printf("Read %d bytes\n", dwBytesRead);
-		printf("Value: %010X\n", dwAddr3);
-
-		Sleep(1000);
+		printf("Service creation successful\n");
 	}
+	else
+	{
+		printf("Service creation failed\n");
+		return 1;
+	}
+
+	DWORD ERROR_CODE;
+	ERROR_CODE = svc.StartSvc();
+	if (ERROR_CODE == SVC_OK)
+	{
+		printf("Service started. \n Pres key to stop. . . \n");
+	}
+	else
+	{
+		printf("Service startup failed with code %lu\n", ERROR_CODE);
+		return 1;
+	}
+
+	getchar();
+
+	if (svc.StopSvc() == SVC_OK)
+		printf("Service stop: OK.\n");
+	else {
+		printf("Service stop: FAILD.\n");
+		return 1;
+	}
+
+	if (svc.UnloadSvc() == SVC_OK)
+		printf("Service unload: OK.\n");
+	else {
+		printf("Service unload: FAILD.\n");
+		return 1;
+	}
+
+
+
 	return 0;
 }
 
